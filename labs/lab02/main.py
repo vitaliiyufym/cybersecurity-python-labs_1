@@ -1,8 +1,10 @@
 """Точка входу: команди demo та analyze."""
 
 import argparse
+import sys
 from datetime import datetime, timedelta, timezone
 
+from labs.lab02 import task2
 from labs.lab02.task1 import Admin, Session, User, UserAccount
 
 
@@ -59,15 +61,18 @@ def run_demo() -> None:
     account.audit_log.show_all()
 
 
-def run_analyze(args: argparse.Namespace) -> None:
-    print("analyze буде реалізовано в Завданні 2")
+def run_analyze(args: argparse.Namespace) -> int:
+    return task2.run(args)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="ЛР №2")
     sub = parser.add_subparsers(dest="command", required=True)
+
     sub.add_parser("demo", help="демонстрація Завдання 1")
-    sub.add_parser("analyze", help="утиліта Завдання 2 (варіант 11)")
+
+    analyze = sub.add_parser("analyze", help="ARP-аудитор (варіант 11)")
+    task2.add_arguments(analyze)
     return parser
 
 
@@ -76,7 +81,7 @@ def main() -> None:
     if args.command == "demo":
         run_demo()
     elif args.command == "analyze":
-        run_analyze(args)
+        sys.exit(run_analyze(args))
 
 
 if __name__ == "__main__":

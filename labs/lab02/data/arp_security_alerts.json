@@ -1,0 +1,49 @@
+{
+  "source_file": "labs\\lab02\\data\\data_v11\\arp_table.csv",
+  "total_entries": 11,
+  "valid_entries": 8,
+  "invalid_entries": [
+    {
+      "line": 10,
+      "ip": "999.168.1.30",
+      "mac": "AA:BB:CC:DD:EE:30",
+      "interface": "eth0",
+      "entry_type": "dynamic",
+      "valid_ip": false,
+      "valid_mac": true
+    },
+    {
+      "line": 11,
+      "ip": "192.168.1.31",
+      "mac": "GG:11:22:33:44:55",
+      "interface": "eth0",
+      "entry_type": "dynamic",
+      "valid_ip": true,
+      "valid_mac": false
+    },
+    {
+      "line": 12,
+      "ip": "192.168.1.32",
+      "mac": "0011.2233.4455",
+      "interface": "eth0",
+      "entry_type": "dynamic",
+      "valid_ip": true,
+      "valid_mac": false
+    }
+  ],
+  "spoofing_checked": true,
+  "spoofing_conflicts": [
+    {
+      "mac": "DE:AD:BE:EF:00:01",
+      "ips": [
+        "192.168.1.20",
+        "192.168.1.21",
+        "192.168.1.22"
+      ],
+      "interfaces": [
+        "eth0",
+        "wlan0"
+      ]
+    }
+  ]
+}
