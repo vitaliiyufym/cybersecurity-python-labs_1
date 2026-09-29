@@ -81,6 +81,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-    """cd D:\Python_laba\cybersecurity-python-labs_1
-       python -m labs.lab02.main demo"""

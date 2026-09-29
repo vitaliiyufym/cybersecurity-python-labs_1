@@ -18,8 +18,6 @@ EMAIL_PATTERN = re.compile(
 
 
 class User:
-    """Користувач із безпечним зберіганням пароля."""
-
     def __init__(
         self,
         username: str,
@@ -76,8 +74,6 @@ class User:
 
 
 class Admin(User):
-    """Адміністратор: користувач із набором дозволів."""
-
     def __init__(
         self,
         username: str,
@@ -87,7 +83,6 @@ class Admin(User):
         active: bool = True,
     ) -> None:
         super().__init__(username, email, "admin", password, active)
-        # нова множина для кожного об'єкта, а не спільна типова
         self.permissions: set[str] = set(permissions) if permissions else set()
 
     def grant_permission(self, permission: str) -> None:
