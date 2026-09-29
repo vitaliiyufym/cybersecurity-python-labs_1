@@ -20,5 +20,71 @@
             "WrongPassword123"
         ],
         "kwargs": {}
+    },
+    {
+        "event": "login",
+        "user": "alice_92",
+        "result": "success",
+        "timestamp": "2026-09-13 13:09:19",
+        "args": [
+            "alice_92",
+            "SecurePass123!"
+        ],
+        "kwargs": {}
+    },
+    {
+        "event": "login",
+        "user": "alice_92",
+        "result": "failure",
+        "timestamp": "2026-09-13 13:09:19",
+        "args": [
+            "alice_92",
+            "WrongPassword123"
+        ],
+        "kwargs": {}
+    },
+    {
+        "event": "login",
+        "user": "alice_92",
+        "result": "success",
+        "timestamp": "2026-09-13 13:57:41",
+        "args": [
+            "alice_92",
+            "SecurePass123!"
+        ],
+        "kwargs": {}
+    },
+    {
+        "event": "login",
+        "user": "alice_92",
+        "result": "failure",
+        "timestamp": "2026-09-13 13:57:41",
+        "args": [
+            "alice_92",
+            "WrongPassword123"
+        ],
+        "kwargs": {}
+    },
+    {
+        "event": "login",
+        "user": "alice_92",
+        "result": "success",
+        "timestamp": "2026-09-14 10:45:13",
+        "args": [
+            "alice_92",
+            "SecurePass123!"
+        ],
+        "kwargs": {}
+    },
+    {
+        "event": "login",
+        "user": "alice_92",
+        "result": "failure",
+        "timestamp": "2026-09-14 10:45:13",
+        "args": [
+            "alice_92",
+            "WrongPassword123"
+        ],
+        "kwargs": {}
     }
 ]

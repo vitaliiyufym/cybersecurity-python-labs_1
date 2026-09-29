@@ -48,18 +48,35 @@ def create_user(username, password):
 
 
 def create_users(users_list):
-    os.makedirs("labs/lab01/data", exist_ok=True)
-    with open("labs/lab01/data/users.csv", "w", newline="") as file:
-        writer = csv.writer(file)
-        for username, password in users_list:
-            username, hash_value = create_user(username, password)
-            writer.writerow([username, hash_value])
+    try:
+        os.makedirs("labs/lab01/data", exist_ok=True)
+        with open("labs/lab01/data/users.csv", "w", newline="") as file:
+            writer = csv.writer(file)
+            for username, password in users_list:
+                username, hash_value = create_user(username, password)
+                writer.writerow([username, hash_value])
+    except FileNotFoundError:
+        print("Помилка: файл не знайдено.")
+    except PermissionError:
+        print("Помилка: немає прав доступу до файлу.")
+    except OSError:
+        print("Помилка вводу/виводу.")
 
 
 def read_users():
-    with open("labs/lab01/data/users.csv", "r") as file:
-        reader = csv.reader(file)
-        return list(reader)
+    try:
+        with open("labs/lab01/data/users.csv", "r") as file:
+            reader = csv.reader(file)
+            return list(reader)
+    except FileNotFoundError:
+        print("Помилка: файл не знайдено.")
+        return []
+    except PermissionError:
+        print("Помилка: немає прав доступу до файлу.")
+        return []
+    except OSError:
+        print("Помилка вводу/виводу.")
+        return []
 
 
 def log_event(func):
@@ -132,12 +149,6 @@ def main():
         print("alice_92 з правильним паролем:", login("alice_92", "SecurePass123!"))
         print("alice_92 з неправильним паролем:", login("alice_92", "WrongPassword123"))
 
-    except FileNotFoundError:
-        print("Помилка: файл не знайдено.")
-    except PermissionError:
-        print("Помилка: немає прав доступу до файлу.")
-    except OSError:
-        print("Помилка вводу/виводу.")
     except ValidationError as e:
         print(f"Помилка валідації: {e}")
     except ValueError as e:
