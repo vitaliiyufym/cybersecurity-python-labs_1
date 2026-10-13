@@ -5,7 +5,14 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 from labs.lab02 import task2
-from labs.lab02.task1 import Admin, Session, User, UserAccount
+from labs.lab02.task1 import (
+    Admin,
+    InvalidIPError,
+    Session,
+    User,
+    UserAccount,
+    WeakPasswordError,
+)
 
 
 def run_demo() -> None:
@@ -60,6 +67,28 @@ def run_demo() -> None:
     print("\n=== 8. Журнал аудиту ===")
     account.audit_log.show_all()
 
+    print("\n=== 9. Обробка помилок ===")
+    try:
+        User("bob", "bob_01@example.com", "user", "123")
+    except WeakPasswordError as e:
+        print("WeakPasswordError:", e)
+    try:
+        Session("999.1.1.1")
+    except InvalidIPError as e:
+        print("InvalidIPError:", e)
+    try:
+        UserAccount("не користувач")
+    except TypeError as e:
+        print("TypeError:", e)
+    try:
+        Session("10.0.0.1").is_active(0)
+    except ValueError as e:
+        print("ValueError:", e)
+    try:
+        admin.grant_permission("")
+    except ValueError as e:
+        print("ValueError:", e)
+
 
 def run_analyze(args: argparse.Namespace) -> int:
     return task2.run(args)
@@ -78,10 +107,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
-    if args.command == "demo":
-        run_demo()
-    elif args.command == "analyze":
-        sys.exit(run_analyze(args))
+    try:
+        if args.command == "demo":
+            run_demo()
+        elif args.command == "analyze":
+            sys.exit(run_analyze(args))
+    except KeyboardInterrupt:
+        print("\n[ERROR] Перервано користувачем")
+        sys.exit(130)
 
 
 if __name__ == "__main__":

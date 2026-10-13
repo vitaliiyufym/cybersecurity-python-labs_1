@@ -1,3 +1,5 @@
+"""Завдання 2 (варіант 11): аудитор ARP-таблиць та виявлення ARP-spoofing."""
+
 import argparse
 import csv
 import json
@@ -9,6 +11,11 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 logger = logging.getLogger("arp_audit")
+
+
+class ArpFileError(Exception):
+    """Файл ARP-таблиці порожній, пошкоджений або має неправильну структуру."""
+
 
 REQUIRED_COLUMNS = ("IP Address", "MAC Address", "Interface", "Type")
 
@@ -40,7 +47,7 @@ class ArpEntry:
 
 @dataclass
 class SpoofingConflict:
-    """Одна MAC-адреса, пов'язана з кількома IP"""
+    """Одна MAC-адреса, пов'язана з кількома IP (ознака ARP-spoofing/MITM)."""
 
     mac: str
     ips: list[str] = field(default_factory=list)
@@ -53,14 +60,19 @@ def normalize_mac(mac: str) -> str:
 
 
 def read_arp_table(path: Path) -> list[ArpEntry]:
-    """Перевіряє CSV і перевірити IP та MAC кожного запису."""
+    """Прочитати CSV і перевірити IP та MAC кожного запису."""
     entries: list[ArpEntry] = []
     with path.open(newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
-        missing = [c for c in REQUIRED_COLUMNS if c not in (reader.fieldnames or [])]
+        if reader.fieldnames is None:
+            raise ArpFileError("файл порожній")
+        missing = [c for c in REQUIRED_COLUMNS if c not in reader.fieldnames]
         if missing:
-            raise ValueError(f"У файлі бракує колонок: {', '.join(missing)}")
+            raise ArpFileError(f"бракує колонок: {', '.join(missing)}")
         for row in reader:
+            if None in row:  # у рядку більше полів, ніж у заголовку
+                logger.warning("Рядок %d: зайві поля, рядок пропущено", reader.line_num)
+                continue
             ip = (row["IP Address"] or "").strip()
             mac = (row["MAC Address"] or "").strip()
             entries.append(
@@ -74,11 +86,13 @@ def read_arp_table(path: Path) -> list[ArpEntry]:
                     valid_mac=bool(MAC_PATTERN.fullmatch(mac)),
                 )
             )
+    if not entries:
+        raise ArpFileError("файл не містить жодного запису")
     return entries
 
 
 def find_spoofing(entries: list[ArpEntry]) -> list[SpoofingConflict]:
-    """Знаходить MAC-адреси, що відповідають кільком різним IP."""
+    """Знайти MAC-адреси, що відповідають кільком різним IP."""
     by_mac: dict[str, list[ArpEntry]] = defaultdict(list)
     for e in entries:
         if e.is_valid:
@@ -94,7 +108,7 @@ def find_spoofing(entries: list[ArpEntry]) -> list[SpoofingConflict]:
 
 
 def setup_logging(log_file: Path | None) -> None:
-    """Логування: у консоль і тіпа ще може за у файл."""
+    """Логування: у консоль (INFO) і, за потреби, у файл."""
     handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
     if log_file:
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -107,11 +121,19 @@ def setup_logging(log_file: Path | None) -> None:
     )
 
 
+def json_path(value: str) -> Path:
+    """Тип для argparse: шлях має закінчуватися на .json."""
+    path = Path(value)
+    if path.suffix.lower() != ".json":
+        raise argparse.ArgumentTypeError(f"очікується файл .json, а не {value!r}")
+    return path
+
+
 def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--arp-file", type=Path, required=True, help="CSV з ARP-таблицею"
     )
-    parser.add_argument("--output-json", type=Path, help="шлях до JSON-звіту")
+    parser.add_argument("--output-json", type=json_path, help="шлях до JSON-звіту")
     parser.add_argument(
         "--detect-spoofing",
         action="store_true",
@@ -121,15 +143,34 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    """Виконуєє аналіз і повертає код 0 і 1- помилка"""
-    setup_logging(args.log_file)
+    """Виконати аналіз. Повертає код завершення (0 - успіх, 1 - помилка)."""
+    if args.output_json and args.output_json.resolve() == args.arp_file.resolve():
+        print("[ERROR] --output-json не може збігатися з вхідним файлом")
+        return 1
+    try:
+        setup_logging(args.log_file)
+    except OSError as exc:
+        print(f"[ERROR] Не вдалося відкрити файл журналу: {exc}")
+        return 1
     try:
         logger.info("Parsing ARP table snapshot from %s...", args.arp_file)
         entries = read_arp_table(args.arp_file)
     except FileNotFoundError:
         logger.error("Файл не знайдено: %s", args.arp_file)
         return 1
-    except (ValueError, csv.Error, UnicodeDecodeError, OSError) as exc:
+    except IsADirectoryError:
+        logger.error("Вказано папку, а не файл: %s", args.arp_file)
+        return 1
+    except PermissionError:
+        logger.error("Немає прав на читання файлу: %s", args.arp_file)
+        return 1
+    except ArpFileError as exc:
+        logger.error("Некоректний файл ARP-таблиці: %s", exc)
+        return 1
+    except UnicodeDecodeError:
+        logger.error("Файл має не UTF-8 кодування: %s", args.arp_file)
+        return 1
+    except (csv.Error, OSError) as exc:
         logger.error("Не вдалося прочитати файл: %s", exc)
         return 1
 
